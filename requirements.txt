@@ -1,0 +1,7 @@
+# basic
+pip >= 23
+notebook
+
+# geocoding
+geotable
+GDAL

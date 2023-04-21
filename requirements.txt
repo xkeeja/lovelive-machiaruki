@@ -5,6 +5,7 @@ notebook
 # geocoding
 geotable
 GDAL
+geocoder
 
 # visualization
 plotly

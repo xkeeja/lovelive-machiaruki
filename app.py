@@ -1,6 +1,7 @@
 from dash import Dash, dcc, html, Input, Output, no_update
 import plotly.express as px
 import geotable
+import geocoder
 import re
 
 
@@ -58,12 +59,22 @@ fig = px.scatter_mapbox(
     t_clean,
     lat=t_clean.geometry_object.apply(lambda x: x.y),
     lon=t_clean.geometry_object.apply(lambda x: x.x),
-    # custom_data=['Name', 'member', 'address', 'hours'],
     opacity=0.7,
     zoom=10,
     height=700,
     mapbox_style='open-street-map'
     )
+
+
+g = geocoder.ip('me')
+fig.add_scattermapbox(
+    lat=[g.latlng[0]],
+    lon=[g.latlng[1]],
+    showlegend=False,
+    marker={'size': 12},
+    opacity=0.8
+)
+
 
 fig.update_traces(marker=dict(size=12),
                   selector=dict(mode='markers'))
@@ -77,6 +88,7 @@ fig.update_traces(hoverinfo="none", hovertemplate=None)
 app = Dash(__name__)
 
 app.layout = html.Div([
+    html.H1('沼津 まちあるき スタンプ 設置店舗', style={'text-align': 'center'}),
     dcc.Graph(id="graph-basic-2", figure=fig, clear_on_unhover=True),
     dcc.Tooltip(id="graph-tooltip"),
 ])
@@ -99,10 +111,26 @@ def display_hover(hoverData):
     bbox = pt["bbox"]
     num = pt["pointNumber"]
 
+    # don't show hover data for current location marker
+    if [pt['lat'], pt['lon']] == g.latlng:
+        return False, no_update, no_update
+
     t_row = t_clean.iloc[num]
     img_src = t_row['img']
     name = t_row['Name']
+
     member = t_row['member']
+    member_colors = {
+        '高海千歌': '#F0A20B',
+        '桜内梨子': '#E9A9E8',
+        '松浦果南': '#13E8AE',
+        '黒澤ダイヤ': '#F23B4C',
+        '渡辺曜': '#49B9F9',
+        '津島善子': '#898989',
+        '国木田花丸': '#E6D617',
+        '小原鞠莉': '#AE58EB',
+        '黒澤ルビィ': '#FB75E4'
+    }
 
     address = t_row['address']
     address_r = [html.B('[住所]'), html.Br()]
@@ -125,8 +153,8 @@ def display_hover(hoverData):
     children = [
         html.Div([
             html.Img(src=img_src, style={"width": "100%"}),
-            html.P([html.B('[メンバー]'), html.Br(), member]),
-            html.H3(name, style={"color": "blue", "overflow-wrap": "break-word"}),
+            html.P(member, style={"color": member_colors[member]}),
+            html.H3(html.B(name), style={"color": "darkblue", "overflow-wrap": "break-word"}),
             html.P(address_r),
             html.P(hours_r),
             html.P(holidays_r)

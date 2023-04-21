@@ -21,6 +21,7 @@ def df_clean(df):
     # find address
     df['address'] = df['Description']\
         .apply(lambda x: re.findall('住所／(.*)<br>営', x)[0])\
+        .str.replace('<br>', ' ')\
         .str.strip()
 
     # split hours & holidays
@@ -64,6 +65,9 @@ fig = px.scatter_mapbox(
     mapbox_style='open-street-map'
     )
 
+fig.update_traces(marker=dict(size=12),
+                  selector=dict(mode='markers'))
+
 # turn off native plotly.js hover effects - make sure to use
 # hoverinfo="none" rather than "skip" which also halts events.
 fig.update_traces(hoverinfo="none", hovertemplate=None)
@@ -99,18 +103,33 @@ def display_hover(hoverData):
     img_src = t_row['img']
     name = t_row['Name']
     member = t_row['member']
+
     address = t_row['address']
+    address_r = [html.B('[住所]'), html.Br()]
+    for i in address.split():
+        address_r.append(i)
+        address_r.append(html.Br())
+
     hours = t_row['hours']
+    hours_r = [html.B('[営業時間]'), html.Br()]
+    for i in hours.split():
+        hours_r.append(i)
+        hours_r.append(html.Br())
+
     holidays = t_row['holidays']
+    holidays_r = [html.B('[定休日]'), html.Br()]
+    for i in holidays.split():
+        holidays_r.append(i)
+        holidays_r.append(html.Br())
 
     children = [
         html.Div([
             html.Img(src=img_src, style={"width": "100%"}),
-            html.P(f'{member}'),
-            html.H3(f'{name}', style={"color": "darkblue", "overflow-wrap": "break-word"}),
-            html.P(f'{address}'),
-            html.P(f'営業時間：{hours}'),
-            html.P(f'定休日：{holidays}')
+            html.P([html.B('[メンバー]'), html.Br(), member]),
+            html.H3(name, style={"color": "blue", "overflow-wrap": "break-word"}),
+            html.P(address_r),
+            html.P(hours_r),
+            html.P(holidays_r)
         ], style={'width': '300px', 'white-space': 'normal'})
     ]
 
